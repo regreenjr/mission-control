@@ -31,7 +31,7 @@ export function useAgents() {
     if (error) {
       setError(error)
     } else {
-      setAgents(data || [])
+      setAgents((data || []) as Agent[])
     }
     setLoading(false)
   }, [])
@@ -73,7 +73,7 @@ export function useAgent(id: string | null) {
         .eq('id', id)
         .single()
 
-      setAgent(data)
+      setAgent(data as Agent | null)
       setLoading(false)
     }
 
@@ -97,7 +97,7 @@ export function useTasks() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    setTasks(data || [])
+    setTasks((data || []) as Task[])
     setLoading(false)
   }, [])
 
@@ -137,16 +137,28 @@ export function useTasksGrouped() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    // Fetch assignments with agents
+    // Fetch assignments
     const { data: assignments } = await supabase
       .from('task_assignments')
-      .select('*, agent:agents(*)')
+      .select('*')
+
+    // Fetch agents
+    const { data: agents } = await supabase
+      .from('agents')
+      .select('*')
+
+    // Build agent map
+    const agentMap = new Map<string, Agent>()
+    for (const agent of (agents || []) as Agent[]) {
+      agentMap.set(agent.id, agent)
+    }
 
     // Build assignment map
     const assignmentMap = new Map<string, Agent[]>()
-    for (const a of assignments || []) {
+    for (const a of (assignments || []) as { task_id: string; agent_id: string }[]) {
       const list = assignmentMap.get(a.task_id) || []
-      if (a.agent) list.push(a.agent as Agent)
+      const agent = agentMap.get(a.agent_id)
+      if (agent) list.push(agent)
       assignmentMap.set(a.task_id, list)
     }
 
@@ -160,12 +172,15 @@ export function useTasksGrouped() {
       blocked: [],
     }
 
-    for (const task of tasks || []) {
+    for (const task of (tasks || []) as Task[]) {
       const enriched: TaskWithAssignees = {
         ...task,
         assignees: assignmentMap.get(task.id) || [],
       }
-      result[task.status as TaskStatus].push(enriched)
+      const status = task.status as TaskStatus
+      if (result[status]) {
+        result[status].push(enriched)
+      }
     }
 
     setGrouped(result)
@@ -211,7 +226,7 @@ export function useTask(id: string | null) {
         .eq('id', id)
         .single()
 
-      setTask(data)
+      setTask(data as Task | null)
       setLoading(false)
     }
 
@@ -242,12 +257,25 @@ export function useTaskAssignees(taskId: string | null) {
     }
 
     const fetch = async () => {
-      const { data } = await supabase
+      // Get assignments
+      const { data: assignments } = await supabase
         .from('task_assignments')
-        .select('*, agent:agents(*)')
+        .select('agent_id')
         .eq('task_id', taskId)
 
-      setAssignees((data || []).map(a => a.agent as Agent).filter(Boolean))
+      if (!assignments || assignments.length === 0) {
+        setAssignees([])
+        return
+      }
+
+      // Get agents
+      const agentIds = assignments.map(a => a.agent_id)
+      const { data: agents } = await supabase
+        .from('agents')
+        .select('*')
+        .in('id', agentIds)
+
+      setAssignees((agents || []) as Agent[])
     }
 
     fetch()
@@ -271,20 +299,24 @@ export function useMessages(taskId: string | null) {
       return
     }
 
+    // Fetch messages
     const { data: msgs } = await supabase
       .from('messages')
-      .select('*, from_agent:agents!messages_from_agent_id_fkey(*)')
+      .select('*')
       .eq('task_id', taskId)
       .order('created_at', { ascending: true })
 
-    // Fetch mentioned agents for each message
+    // Fetch all agents
     const { data: agents } = await supabase.from('agents').select('*')
-    const agentMap = new Map((agents || []).map(a => [a.id, a]))
+    const agentMap = new Map<string, Agent>()
+    for (const agent of (agents || []) as Agent[]) {
+      agentMap.set(agent.id, agent)
+    }
 
-    const enriched: MessageWithAgent[] = (msgs || []).map(msg => ({
+    const enriched: MessageWithAgent[] = ((msgs || []) as any[]).map(msg => ({
       ...msg,
-      from_agent: msg.from_agent as Agent | null,
-      mentioned_agents: (msg.mentions || []).map(id => agentMap.get(id)).filter(Boolean) as Agent[],
+      from_agent: msg.from_agent_id ? agentMap.get(msg.from_agent_id) || null : null,
+      mentioned_agents: (msg.mentions || []).map((id: string) => agentMap.get(id)).filter(Boolean) as Agent[],
     }))
 
     setMessages(enriched)
@@ -320,16 +352,31 @@ export function useActivities(limit = 50) {
   const [loading, setLoading] = useState(true)
 
   const fetchActivities = useCallback(async () => {
-    const { data } = await supabase
+    // Fetch activities
+    const { data: activityData } = await supabase
       .from('activities')
-      .select('*, agent:agents(*), task:tasks(*)')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    setActivities((data || []).map(a => ({
+    // Fetch agents and tasks
+    const { data: agents } = await supabase.from('agents').select('*')
+    const { data: tasks } = await supabase.from('tasks').select('*')
+
+    const agentMap = new Map<string, Agent>()
+    for (const agent of (agents || []) as Agent[]) {
+      agentMap.set(agent.id, agent)
+    }
+
+    const taskMap = new Map<string, Task>()
+    for (const task of (tasks || []) as Task[]) {
+      taskMap.set(task.id, task)
+    }
+
+    setActivities(((activityData || []) as Activity[]).map(a => ({
       ...a,
-      agent: a.agent as Agent | null,
-      task: a.task as Task | null,
+      agent: a.agent_id ? agentMap.get(a.agent_id) || null : null,
+      task: a.task_id ? taskMap.get(a.task_id) || null : null,
     })))
     setLoading(false)
   }, [limit])
@@ -376,8 +423,8 @@ export function useDailySummary() {
         supabase.from('agents').select('*'),
       ])
 
-      const activityList = activities || []
-      const agentList = agents || []
+      const activityList = (activities || []) as Activity[]
+      const agentList = (agents || []) as Agent[]
 
       // Group by agent
       const byAgent = new Map<string, Activity[]>()
@@ -429,16 +476,31 @@ export function useDocuments(limit = 100) {
   const [loading, setLoading] = useState(true)
 
   const fetchDocuments = useCallback(async () => {
-    const { data } = await supabase
+    // Fetch documents
+    const { data: docs } = await supabase
       .from('documents')
-      .select('*, creator:agents!documents_created_by_fkey(*), task:tasks(*)')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    setDocuments((data || []).map(d => ({
+    // Fetch agents and tasks
+    const { data: agents } = await supabase.from('agents').select('*')
+    const { data: tasks } = await supabase.from('tasks').select('*')
+
+    const agentMap = new Map<string, Agent>()
+    for (const agent of (agents || []) as Agent[]) {
+      agentMap.set(agent.id, agent)
+    }
+
+    const taskMap = new Map<string, Task>()
+    for (const task of (tasks || []) as Task[]) {
+      taskMap.set(task.id, task)
+    }
+
+    setDocuments(((docs || []) as any[]).map(d => ({
       ...d,
-      creator: d.creator as Agent | null,
-      task: d.task as Task | null,
+      creator: d.created_by ? agentMap.get(d.created_by) || null : null,
+      task: d.task_id ? taskMap.get(d.task_id) || null : null,
     })))
     setLoading(false)
   }, [limit])
@@ -475,15 +537,21 @@ export function useDocument(id: string | null) {
     const fetch = async () => {
       const { data } = await supabase
         .from('documents')
-        .select('*, creator:agents!documents_created_by_fkey(*), task:tasks(*)')
+        .select('*')
         .eq('id', id)
         .single()
 
       if (data) {
+        // Fetch related agent and task
+        const [{ data: agent }, { data: task }] = await Promise.all([
+          data.created_by ? supabase.from('agents').select('*').eq('id', data.created_by).single() : { data: null },
+          data.task_id ? supabase.from('tasks').select('*').eq('id', data.task_id).single() : { data: null },
+        ])
+
         setDocument({
-          ...data,
-          creator: data.creator as Agent | null,
-          task: data.task as Task | null,
+          ...(data as any),
+          creator: agent as Agent | null,
+          task: task as Task | null,
         })
       }
       setLoading(false)
@@ -505,14 +573,21 @@ export function useDocumentsByTask(taskId: string | null) {
     }
 
     const fetch = async () => {
-      const { data } = await supabase
+      const { data: docs } = await supabase
         .from('documents')
-        .select('*, creator:agents!documents_created_by_fkey(*)')
+        .select('*')
         .eq('task_id', taskId)
 
-      setDocuments((data || []).map(d => ({
+      // Fetch agents
+      const { data: agents } = await supabase.from('agents').select('*')
+      const agentMap = new Map<string, Agent>()
+      for (const agent of (agents || []) as Agent[]) {
+        agentMap.set(agent.id, agent)
+      }
+
+      setDocuments(((docs || []) as any[]).map(d => ({
         ...d,
-        creator: d.creator as Agent | null,
+        creator: d.created_by ? agentMap.get(d.created_by) || null : null,
         task: null,
       })))
     }
@@ -537,9 +612,9 @@ export function useMutations() {
     }
 
     const agents = [
-      { name: 'Atlas', role: 'Squad Lead', session_key: 'agent:lead:main', level: 'lead' as const, avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=atlas' },
-      { name: 'Scout', role: 'Researcher', session_key: 'agent:researcher:main', level: 'specialist' as const, avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=scout' },
-      { name: 'Scribe', role: 'Content Writer', session_key: 'agent:writer:main', level: 'specialist' as const, avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=scribe' },
+      { name: 'Atlas', role: 'Squad Lead', session_key: 'agent:lead:main', level: 'lead', avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=atlas' },
+      { name: 'Scout', role: 'Researcher', session_key: 'agent:researcher:main', level: 'specialist', avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=scout' },
+      { name: 'Scribe', role: 'Content Writer', session_key: 'agent:writer:main', level: 'specialist', avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=scribe' },
     ]
 
     const { error } = await supabase.from('agents').insert(agents)
@@ -598,7 +673,7 @@ export function useMutations() {
     // Log activity
     await supabase.from('activities').insert({
       type: 'task_created',
-      task_id: task.id,
+      task_id: (task as any).id,
       agent_id: data.created_by,
       message: `Task created: ${data.title}`,
     })
@@ -616,7 +691,7 @@ export function useMutations() {
     await supabase.from('activities').insert({
       type: status === 'done' ? 'task_completed' : 'task_updated',
       task_id: id,
-      message: `Task ${status === 'done' ? 'completed' : `moved to ${status}`}: ${task?.title}`,
+      message: `Task ${status === 'done' ? 'completed' : `moved to ${status}`}: ${(task as any)?.title}`,
     })
   }
 
@@ -660,7 +735,7 @@ export function useMutations() {
     const mentionNames = [...data.content.matchAll(mentionPattern)].map(m => m[1].toLowerCase())
 
     const { data: agents } = await supabase.from('agents').select('id, name')
-    const mentionedIds = (agents || [])
+    const mentionedIds = ((agents || []) as { id: string; name: string }[])
       .filter(a => mentionNames.includes(a.name.toLowerCase()))
       .map(a => a.id)
 
@@ -684,7 +759,7 @@ export function useMutations() {
         mentioned_agent_id: agentId,
         from_agent_id: data.fromAgentId,
         task_id: data.taskId,
-        message_id: message.id,
+        message_id: (message as any).id,
         content: data.content,
       })
     }
@@ -695,13 +770,13 @@ export function useMutations() {
       .select('agent_id')
       .eq('task_id', data.taskId)
 
-    for (const sub of subscriptions || []) {
+    for (const sub of (subscriptions || []) as { agent_id: string }[]) {
       if (!mentionedIds.includes(sub.agent_id) && sub.agent_id !== data.fromAgentId) {
         await supabase.from('notifications').insert({
           mentioned_agent_id: sub.agent_id,
           from_agent_id: data.fromAgentId,
           task_id: data.taskId,
-          message_id: message.id,
+          message_id: (message as any).id,
           content: `New comment: ${data.content.substring(0, 100)}`,
         })
       }
@@ -709,7 +784,7 @@ export function useMutations() {
 
     // Log activity
     const fromAgent = data.fromAgentId
-      ? (agents || []).find(a => a.id === data.fromAgentId)
+      ? ((agents || []) as { id: string; name: string }[]).find(a => a.id === data.fromAgentId)
       : null
     const { data: task } = await supabase.from('tasks').select('title').eq('id', data.taskId).single()
 
@@ -717,7 +792,7 @@ export function useMutations() {
       type: 'message_sent',
       agent_id: data.fromAgentId,
       task_id: data.taskId,
-      message: `${fromAgent?.name ?? data.fromHuman ?? 'Someone'} commented on "${task?.title}"`,
+      message: `${fromAgent?.name ?? data.fromHuman ?? 'Someone'} commented on "${(task as any)?.title}"`,
     })
 
     return message
@@ -755,7 +830,7 @@ export function useMutations() {
       type: 'document_created',
       agent_id: data.createdBy,
       task_id: data.taskId,
-      message: `${agent?.name} created document: ${data.title}${task ? ` for "${task.title}"` : ''}`,
+      message: `${(agent as any)?.name} created document: ${data.title}${task ? ` for "${(task as any).title}"` : ''}`,
     })
 
     return doc
