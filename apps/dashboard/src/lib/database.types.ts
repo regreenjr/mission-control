@@ -22,98 +22,101 @@ export interface Database {
           name: string
           role: string
           session_key: string
-          status: AgentStatus
+          status: string
           current_task_id: string | null
-          level: AgentLevel
+          level: string
           avatar_url: string | null
           last_heartbeat: string | null
-          created_at: string
-          updated_at: string
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
           name: string
           role: string
           session_key: string
-          status?: AgentStatus
+          status?: string
           current_task_id?: string | null
-          level: AgentLevel
+          level: string
           avatar_url?: string | null
           last_heartbeat?: string | null
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           name?: string
           role?: string
           session_key?: string
-          status?: AgentStatus
+          status?: string
           current_task_id?: string | null
-          level?: AgentLevel
+          level?: string
           avatar_url?: string | null
           last_heartbeat?: string | null
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
         }
+        Relationships: []
       }
       tasks: {
         Row: {
           id: string
           title: string
           description: string
-          status: TaskStatus
-          priority: TaskPriority
+          status: string
+          priority: string
           created_by: string | null
           due_date: string | null
-          tags: string[]
-          created_at: string
-          updated_at: string
+          tags: string[] | null
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
           title: string
           description: string
-          status?: TaskStatus
-          priority?: TaskPriority
+          status?: string
+          priority?: string
           created_by?: string | null
           due_date?: string | null
-          tags?: string[]
-          created_at?: string
-          updated_at?: string
+          tags?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           title?: string
           description?: string
-          status?: TaskStatus
-          priority?: TaskPriority
+          status?: string
+          priority?: string
           created_by?: string | null
           due_date?: string | null
-          tags?: string[]
-          created_at?: string
-          updated_at?: string
+          tags?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
         }
+        Relationships: []
       }
       task_assignments: {
         Row: {
           id: string
           task_id: string
           agent_id: string
-          assigned_at: string
+          assigned_at: string | null
         }
         Insert: {
           id?: string
           task_id: string
           agent_id: string
-          assigned_at?: string
+          assigned_at?: string | null
         }
         Update: {
           id?: string
           task_id?: string
           agent_id?: string
-          assigned_at?: string
+          assigned_at?: string | null
         }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -122,10 +125,10 @@ export interface Database {
           from_agent_id: string | null
           from_human: string | null
           content: string
-          attachments: string[]
-          mentions: string[]
-          created_at: string
-          updated_at: string
+          attachments: string[] | null
+          mentions: string[] | null
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -133,10 +136,10 @@ export interface Database {
           from_agent_id?: string | null
           from_human?: string | null
           content: string
-          attachments?: string[]
-          mentions?: string[]
-          created_at?: string
-          updated_at?: string
+          attachments?: string[] | null
+          mentions?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -144,75 +147,78 @@ export interface Database {
           from_agent_id?: string | null
           from_human?: string | null
           content?: string
-          attachments?: string[]
-          mentions?: string[]
-          created_at?: string
-          updated_at?: string
+          attachments?: string[] | null
+          mentions?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
         }
+        Relationships: []
       }
       activities: {
         Row: {
           id: string
-          type: ActivityType
+          type: string
           agent_id: string | null
           task_id: string | null
           message: string
-          metadata: Json
-          created_at: string
+          metadata: Json | null
+          created_at: string | null
         }
         Insert: {
           id?: string
-          type: ActivityType
+          type: string
           agent_id?: string | null
           task_id?: string | null
           message: string
-          metadata?: Json
-          created_at?: string
+          metadata?: Json | null
+          created_at?: string | null
         }
         Update: {
           id?: string
-          type?: ActivityType
+          type?: string
           agent_id?: string | null
           task_id?: string | null
           message?: string
-          metadata?: Json
-          created_at?: string
+          metadata?: Json | null
+          created_at?: string | null
         }
+        Relationships: []
       }
       documents: {
         Row: {
           id: string
           title: string
           content: string
-          type: DocumentType
+          type: string
           task_id: string | null
           created_by: string
           version: number
-          created_at: string
-          updated_at: string
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
           title: string
           content: string
-          type: DocumentType
+          type: string
           task_id?: string | null
           created_by: string
           version?: number
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           title?: string
           content?: string
-          type?: DocumentType
+          type?: string
           task_id?: string | null
           created_by?: string
           version?: number
-          created_at?: string
-          updated_at?: string
+          created_at?: string | null
+          updated_at?: string | null
         }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -224,7 +230,7 @@ export interface Database {
           content: string
           delivered: boolean
           read: boolean
-          created_at: string
+          created_at: string | null
         }
         Insert: {
           id?: string
@@ -235,7 +241,7 @@ export interface Database {
           content: string
           delivered?: boolean
           read?: boolean
-          created_at?: string
+          created_at?: string | null
         }
         Update: {
           id?: string
@@ -246,29 +252,43 @@ export interface Database {
           content?: string
           delivered?: boolean
           read?: boolean
-          created_at?: string
+          created_at?: string | null
         }
+        Relationships: []
       }
       subscriptions: {
         Row: {
           id: string
           agent_id: string
           task_id: string
-          created_at: string
+          created_at: string | null
         }
         Insert: {
           id?: string
           agent_id: string
           task_id: string
-          created_at?: string
+          created_at?: string | null
         }
         Update: {
           id?: string
           agent_id?: string
           task_id?: string
-          created_at?: string
+          created_at?: string | null
         }
+        Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

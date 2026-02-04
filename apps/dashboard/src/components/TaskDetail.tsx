@@ -20,7 +20,7 @@ interface TaskDetailProps {
 
 export function TaskDetail({ taskId, onClose }: TaskDetailProps) {
   const { task, loading: taskLoading } = useTask(taskId)
-  const { messages, loading: messagesLoading } = useMessages(taskId)
+  const { messages } = useMessages(taskId)
   const documents = useDocumentsByTask(taskId)
   const { agents } = useAgents()
   const currentAssignees = useTaskAssignees(taskId)
@@ -106,7 +106,7 @@ export function TaskDetail({ taskId, onClose }: TaskDetailProps) {
         </div>
 
         {/* Tags */}
-        {task.tags.length > 0 && (
+        {task.tags && task.tags.length > 0 && (
           <div className="p-4 border-b border-slate-700">
             <h3 className="text-sm font-medium text-slate-400 mb-2 flex items-center gap-2">
               <Tag className="w-4 h-4" />

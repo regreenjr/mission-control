@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useDocuments, useDocument, useTasks, useAgents, useMutations } from '../lib/hooks'
-import type { DocumentType, DocumentWithRelations } from '../lib/database.types'
+import type { DocumentType } from '../lib/database.types'
 import { formatDistanceToNow } from 'date-fns'
 import {
   FileText,
