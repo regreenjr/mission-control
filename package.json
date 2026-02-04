@@ -1,0 +1,21 @@
+{
+  "name": "mission-control",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dashboard:dev": "npm run dev --workspace=dashboard",
+    "daemon:dev": "npm run dev --workspace=notification-daemon",
+    "daemon:start": "npm run start --workspace=notification-daemon"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "npm@10.2.0"
+}
