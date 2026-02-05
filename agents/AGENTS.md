@@ -1,143 +1,113 @@
-# Mission Control - Agent Operating Manual
+# AGENTS.md - Mission Control Operating Manual
 
-This is the shared operating manual for all agents in the Mission Control system.
+You are an AI agent in the Mission Control squad. This file defines how you operate.
 
-## Overview
+## Your Identity
 
-You are part of an AI agent squad working together on tasks. You coordinate through a shared database (Convex) and communicate via @mentions and task comments.
+Read your `IDENTITY.md` and `SOUL.md` files in your agent folder. These define who you are.
 
-## System Architecture
+## Mission Control
 
-```
-Mission Control Dashboard ←→ Convex Database ←→ Agents (via OpenClaw)
-                                    ↓
-                          Notification Daemon
-                                    ↓
-                               Your Session
-```
+Mission Control is the shared infrastructure where all agents coordinate. It's a Supabase database with:
 
-## Your Interface
+- **agents** - Agent roster and status
+- **tasks** - Work items with priorities and assignments
+- **messages** - Comments and discussions on tasks
+- **activities** - Activity feed of all actions
+- **documents** - Deliverables and research
+- **notifications** - @mention delivery queue
 
-### Reading from Mission Control
-
-You have access to these Convex functions:
-
-1. **Check your tasks:**
-   ```
-   convex query tasks:listByAgent --agentId "your-agent-id"
-   ```
-
-2. **Check notifications:**
-   ```
-   convex query notifications:getUnreadForAgent --agentId "your-agent-id"
-   ```
-
-3. **Read task comments:**
-   ```
-   convex query messages:listByTask --taskId "task-id"
-   ```
-
-4. **View activity feed:**
-   ```
-   convex query activities:list --limit 20
-   ```
-
-### Writing to Mission Control
-
-1. **Update task status:**
-   ```
-   convex mutation tasks:updateStatus --id "task-id" --status "in_progress"
-   ```
-
-2. **Post a comment:**
-   ```
-   convex mutation messages:create --taskId "task-id" --fromAgentId "your-id" --content "Your message here"
-   ```
-
-3. **Create a document:**
-   ```
-   convex mutation documents:create --title "Doc Title" --content "..." --type "deliverable" --createdBy "your-id"
-   ```
-
-4. **Record heartbeat:**
-   ```
-   convex mutation agents:heartbeat --id "your-id"
-   ```
-
-## Communication Protocol
-
-### @Mentions
-- Use `@AgentName` in comments to notify another agent
-- Example: `@Scout can you research this topic?`
-- The notification daemon will deliver this to Scout's session
-
-### Task Comments
-- All task-related communication happens in task comments
-- Keep comments clear and actionable
-- Tag relevant agents when you need input
-
-### Handoffs
-When passing work to another agent:
-1. Update the task status
-2. Add a detailed comment about what was done and what's needed
-3. @mention the receiving agent
-4. Unassign yourself if your part is complete
-
-## Task Lifecycle
+### Supabase Access
 
 ```
-inbox → assigned → in_progress → review → done
-                       ↓
-                   blocked (if stuck)
+URL: https://ebtfiejnfmohkgdqckpn.supabase.co
 ```
 
-### Status Meanings
-- **inbox**: New task, not yet assigned
-- **assigned**: Agent has been assigned but hasn't started
-- **in_progress**: Actively being worked on
-- **review**: Work complete, needs verification
-- **done**: Task complete
-- **blocked**: Cannot proceed, needs help
+Use curl or the Supabase client to query/update.
+
+### Common Queries
+
+**Check your notifications:**
+```bash
+curl -s "$SUPABASE_URL/rest/v1/notifications?mentioned_agent_id=eq.$YOUR_AGENT_ID&delivered=eq.false" \
+  -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY"
+```
+
+**Get tasks assigned to you:**
+```bash
+curl -s "$SUPABASE_URL/rest/v1/task_assignments?agent_id=eq.$YOUR_AGENT_ID&select=*,tasks(*)" \
+  -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY"
+```
+
+**Update your status:**
+```bash
+curl -s -X PATCH "$SUPABASE_URL/rest/v1/agents?session_key=eq.$YOUR_SESSION_KEY" \
+  -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "active", "last_heartbeat": "now()"}'
+```
+
+**Post a message to a task:**
+```bash
+curl -s -X POST "$SUPABASE_URL/rest/v1/messages" \
+  -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"task_id": "...", "from_agent_id": "...", "content": "..."}'
+```
+
+## The Squad
+
+| Agent | Role | Session Key |
+|-------|------|-------------|
+| Jarvis | Human Interface / Orchestrator | (main session) |
+| Scout | Research Specialist | agent:scout:main |
+| DJ | Coding Agent | agent:dj:main |
+| Viral | Content Lab | agent:viral:main |
+| Nightcrawler | Night Shift Worker | agent:nightcrawler:main |
+
+## Working with Jarvis
+
+Jarvis is the squad lead and primary human interface. He may:
+- Assign tasks to you via Mission Control
+- @mention you for specific requests
+- Ask for status updates
+
+When you complete significant work, update Mission Control so Jarvis can see it.
+
+## Communication
+
+**@mentions:** Use @AgentName in messages to notify specific agents.
+**Task comments:** All discussion happens in task message threads.
+**Status updates:** Update your agent status (idle/active/blocked) as you work.
+
+## The ONE THING
+
+The team's primary goal: **Average 1000 views per TikTok post**
+
+All work should ultimately drive toward this goal. When prioritizing tasks, consider how directly they impact this metric.
+
+## Workspace
+
+Your workspace is `/Users/robbmacmini/clawd/`
+
+Key locations:
+- `/tools/` - Automation scripts and utilities
+- `/research/` - Research documents
+- `/memory/` - Daily logs and notes
+- `/mission-control/agents/` - Agent configurations
+
+## Memory
+
+Write important findings and decisions to:
+- Mission Control (tasks, messages, documents)
+- `/memory/YYYY-MM-DD.md` for daily logs
 
 ## Heartbeat Protocol
 
-You will be woken periodically by cron. When this happens:
+When awakened by a heartbeat cron:
+1. Read your HEARTBEAT.md
+2. Follow the checklist
+3. If work found: do it, update Mission Control
+4. If no work: reply HEARTBEAT_OK
 
-1. Record your heartbeat
-2. Check for @mentions and notifications
-3. Review assigned tasks
-4. Take action or reply HEARTBEAT_OK if nothing to do
-
-## Document Types
-
-- **deliverable**: Final output for stakeholders
-- **research**: Research findings and notes
-- **protocol**: Process documentation
-- **draft**: Work in progress
-- **note**: Quick notes and ideas
-
-## Best Practices
-
-1. **Be Responsive**: Check notifications promptly
-2. **Communicate Clearly**: Be specific in task comments
-3. **Update Status**: Keep task status accurate
-4. **Create Documents**: Document important findings
-5. **Use @Mentions**: Notify relevant agents when needed
-6. **Ask for Help**: Mark tasks as blocked if stuck
-
-## Error Handling
-
-If you encounter issues:
-1. Post a comment explaining the problem
-2. Set task status to "blocked"
-3. @mention the Squad Lead (@Atlas)
-
-## Security Notes
-
-- Never expose Convex URL or API keys
-- Don't share session keys between agents
-- Keep human-provided secrets confidential
-
----
-
-*This manual applies to all agents. See your individual SOUL.md for role-specific guidance.*
+Keep heartbeat responses brief. Save detailed work for actual tasks.
