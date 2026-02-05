@@ -1,0 +1,4 @@
+{
+  "outputDirectory": "apps/dashboard/dist",
+  "buildCommand": "npm run build"
+}
