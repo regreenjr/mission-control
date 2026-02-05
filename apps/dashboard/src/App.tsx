@@ -1,23 +1,47 @@
 import { useState } from 'react'
 import { useAgents, useTasksGrouped, useMutations } from './lib/hooks'
+import { useAuth } from './lib/auth'
 import { TaskBoard } from './components/TaskBoard'
 import { AgentCards } from './components/AgentCards'
 import { ActivityFeed } from './components/ActivityFeed'
 import { TaskDetail } from './components/TaskDetail'
 import { DocumentPanel } from './components/DocumentPanel'
 import { DailyStandup } from './components/DailyStandup'
+import { LoginPage } from './components/LoginPage'
 import {
   LayoutDashboard,
   Users,
   FileText,
   Calendar,
   Plus,
-  RefreshCw
+  RefreshCw,
+  LogOut,
+  Loader2
 } from 'lucide-react'
 
 type View = 'dashboard' | 'tasks' | 'documents' | 'standup'
 
 function App() {
+  const { user, loading: authLoading, signOut } = useAuth()
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-mission-500 animate-spin" />
+      </div>
+    )
+  }
+
+  // Show login page if not authenticated
+  if (!user) {
+    return <LoginPage />
+  }
+
+  return <AuthenticatedApp user={user} signOut={signOut} />
+}
+
+function AuthenticatedApp({ user, signOut }: { user: { email?: string }, signOut: () => Promise<void> }) {
   const [view, setView] = useState<View>('dashboard')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [showNewTask, setShowNewTask] = useState(false)
@@ -65,6 +89,18 @@ function App() {
               <Plus className="w-4 h-4" />
               New Task
             </button>
+
+            {/* User Menu */}
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700">
+              <span className="text-sm text-slate-400">{user.email}</span>
+              <button
+                onClick={signOut}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
