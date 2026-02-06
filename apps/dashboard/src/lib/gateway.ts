@@ -1,10 +1,15 @@
 // Gateway configuration
-// Uses Tailscale Funnel URL for remote access, falls back to localhost for local dev
+// Uses Vercel API proxy to avoid CORS issues
 
-// Production URL via Tailscale Funnel
-export const GATEWAY_URL = 'https://robbmacmini.tail8f0b6c.ts.net'
+// In production (Vercel), use the proxy API route
+// In development, use localhost directly
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost'
 
-// Auth token (same for local and remote)
+export const GATEWAY_URL = isLocalhost 
+  ? 'http://localhost:38472' 
+  : '/api/gateway'
+
+// Auth token (used by local dev - proxy handles auth for production)
 export const GATEWAY_TOKEN = 'xK9mQ4vL2pR7wZ8nJ3bT6yF1hD5sA0eC'
 
 // Helper to make authenticated requests
