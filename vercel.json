@@ -1,8 +1,13 @@
 {
   "outputDirectory": "apps/dashboard/dist",
   "buildCommand": "npm run build",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/edge"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/gateway/(.*)", "destination": "/api/gateway/[...path]" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
