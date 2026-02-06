@@ -14,8 +14,7 @@ import {
 import { format } from 'date-fns'
 
 // Gateway config
-const GATEWAY_URL = 'http://localhost:38472'
-const GATEWAY_TOKEN = 'xK9mQ4vL2pR7wZ8nJ3bT6yF1hD5sA0eC'
+import { GATEWAY_URL, GATEWAY_TOKEN } from '../lib/gateway'
 
 interface Agent {
   id: string
