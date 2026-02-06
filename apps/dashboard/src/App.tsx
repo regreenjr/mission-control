@@ -8,6 +8,7 @@ import { TaskDetail } from './components/TaskDetail'
 import { DocumentPanel } from './components/DocumentPanel'
 import { DailyStandup } from './components/DailyStandup'
 import { ScheduledTasks } from './components/ScheduledTasks'
+import { MemoryView } from './components/MemoryView'
 import { LoginPage } from './components/LoginPage'
 import {
   LayoutDashboard,
@@ -369,28 +370,7 @@ function ProjectsView() {
   )
 }
 
-// Placeholder: Memory view
-function MemoryView() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Brain className="w-6 h-6 text-mission-400" />
-        <div>
-          <h2 className="text-xl font-bold text-white">Memory</h2>
-          <p className="text-sm text-slate-400">Agent knowledge and learned context</p>
-        </div>
-      </div>
-      
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
-        <Brain className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">Coming Soon</h3>
-        <p className="text-slate-400 max-w-md mx-auto">
-          Browse and manage what your agents remember. Edit knowledge, add context, and review learnings.
-        </p>
-      </div>
-    </div>
-  )
-}
+// MemoryView is imported from ./components/MemoryView
 
 // Placeholder: Captures view
 function CapturesView() {
