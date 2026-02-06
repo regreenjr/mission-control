@@ -9,6 +9,7 @@ import { DocumentPanel } from './components/DocumentPanel'
 import { DailyStandup } from './components/DailyStandup'
 import { ScheduledTasks } from './components/ScheduledTasks'
 import { MemoryView } from './components/MemoryView'
+import { ChatView } from './components/ChatView'
 import { LoginPage } from './components/LoginPage'
 import {
   LayoutDashboard,
@@ -301,28 +302,7 @@ function TopTab({
   )
 }
 
-// Placeholder: Chat view - for agent conversations
-function ChatView() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <MessageSquare className="w-6 h-6 text-mission-400" />
-        <div>
-          <h2 className="text-xl font-bold text-white">Agent Chat</h2>
-          <p className="text-sm text-slate-400">Direct communication with agents</p>
-        </div>
-      </div>
-      
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-8 text-center">
-        <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">Coming Soon</h3>
-        <p className="text-slate-400 max-w-md mx-auto">
-          Chat directly with your AI agents. Send tasks, ask questions, and get real-time responses.
-        </p>
-      </div>
-    </div>
-  )
-}
+// ChatView is imported from ./components/ChatView
 
 // Placeholder: Council view - for multi-agent deliberation
 function CouncilView() {
