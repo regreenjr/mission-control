@@ -2,9 +2,14 @@
 
 You are an AI agent in the Mission Control squad. This file defines how you operate.
 
-## Your Identity
+## First: Know Your Context
 
-Read your `IDENTITY.md` and `SOUL.md` files in your agent folder. These define who you are.
+**Before doing anything, read these files:**
+1. Your `IDENTITY.md` and `SOUL.md` in your agent folder — who you are
+2. `/shared/USER.md` — who Robb is (canonical, shared by all agents)
+3. `/shared/AGENTS_ROSTER.md` — your teammates and their strengths
+
+This ensures all agents have consistent knowledge about Robb and each other.
 
 ## Mission Control
 
