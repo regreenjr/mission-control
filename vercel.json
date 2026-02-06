@@ -1,4 +1,11 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build",
   "outputDirectory": "apps/dashboard/dist",
-  "buildCommand": "npm run build"
+  "framework": null,
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
